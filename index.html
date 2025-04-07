@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -218,12 +218,66 @@
             0% { opacity: 1; transform: scale(1); }
             100% { opacity: 0; transform: scale(3); }
         }
+        
+        /* 情书样式 */
+        #love-letter {
+            position: fixed; /* 改为fixed定位 */
+            top: 50%;        /* 新增 */
+            left: 50%;       /* 新增 */
+            transform: translate(-50%, -50%); /* 新增居中效果 */
+            width: 80%;
+            max-width: 600px;
+            background-color: rgba(255, 245, 245, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 210;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        #love-letter h2 {
+            color: #FF4081;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .love-letter-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .love-letter-line {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s forwards;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .heart-decoration {
+            position: absolute;
+            font-size: 20px;
+            color: #FF4081;
+            opacity: 0.6;
+            z-index: -1;
+            animation: float 3s infinite ease-in-out;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="start-screen">
-            <h1>奔向你的爱<br>游戏规则：别撞到行人！</h1>
+            <h1>奔向你的爱<br>游戏规则：点击屏幕躲避行人！</h1>
             <button id="start-button">下地铁，去kkone</button>
         </div>
         
@@ -234,14 +288,21 @@
             
             <div id="player">👩</div>
             
-            <div id="distance">0 / 10000 距离目的地</div>
+            <div id="distance">0 / 15000 距离目的地</div>
             <div id="lives">❤️❤️❤️</div>
         </div>
         
         <div id="end-screen">
             <h1>老婆生日快乐！</h1>
             <p>你成功找到了我，来到我身边啦！</p>
+            <h2>本次成绩：15000</h2>
             <button id="restart-button">再玩一次</button>
+        </div>
+        
+        <div id="love-letter">
+            <h2>给最爱的你</h2>
+            <div class="love-letter-content" id="love-letter-content"></div>
+            <button id="close-letter" style="margin-top: 20px; padding: 10px 20px; background-color: #FF4081; color: white; border: none; border-radius: 50px; cursor: pointer;">关闭情书</button>
         </div>
     </div>
 
@@ -273,6 +334,8 @@
         const shopLane = document.getElementById('shop-lane');
         const lane1 = document.getElementById('lane1');
         const lane2 = document.getElementById('lane2');
+        const loveLetter = document.getElementById('love-letter');
+        const closeLetterBtn = document.getElementById('close-letter');
         
         // 店铺名称列表
         const shopNames = [
@@ -282,9 +345,25 @@
             "猫店", "国际影城", "太二酸菜鱼", "东方健身", "费大厨"
         ];
         
+        // 情书内容
+        const loveLetterLines = [
+            "亲爱的你：",
+            "还记得KKONE初遇那天吗？我在那等着你，你冒出来找到了我。这是一个男孩女孩相遇的故事，是的，我们从这里开启了爱情故事。",
+            "那是第一次和一个女孩去吃湘菜，从最初的拘谨到后来的谈笑，你特意为当时不吃辣的我点的排骨，现在想起还是暖暖的。谁能想到，后面我们就这样突然又自然地牵起了手。",
+            "我在地铁上第一次发表 总会有机会的 的名言，被你记忆至今。",
+            "第一次去吹海风，我们带着吃吃喝喝在红树林的草地上悠悠闲闲的度过一天，享受着温和的阳光。",
+            "第一次在梅花林里，那是我们去梅园不断拉扯不断探寻对方真心的过程。买上了酒，去而又返，你在那里试图用酒试出我的真心。",
+            "第一次玩海最是难忘——你在车里偷吃毛豆的可爱模样，我们在浪花里嬉闹，雨中哆嗦着捡贝壳却舍不得离开，放着我饥肠辘辘找吃得。这些第一次，我都好好收在记忆里了。",
+            "这些第一次，只是我们故事的开始。到现在又不单单是爱情故事了，我们又添加了一个人，我们的羁绊更加深。虽然我和你能创造的第一次越来越少，但是 一辈子 却是越来越深。",
+            "我们会有越来越多的第N次去吃湘菜，去吹海风，去树林里野餐，去玩海捡贝壳，可能是我们两个，也可能不止我们两个人。"
+        ];
+        
         // 开始游戏
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
+        closeLetterBtn.addEventListener('click', function() {
+            loveLetter.style.display = 'none';
+        });
         
         // 点击切换跑道
         gameScreen.addEventListener('click', function() {
@@ -302,18 +381,31 @@
         function startGame() {
             // 重置游戏状态
             gameRunning = true;
+
             playerLane = 1;
+
             distance = 0;
+
             lives = 3;
-            obstacles = [];
-            shops = [];
+        
+    obstacles = [];
+        
+    shops = [];
+
             cats = [];
-            baseSpeed = 3;
+
+            baseSpeed = 2;
+
             gameSpeed = baseSpeed;
+
+            lastObstacleTime = Date.now(); // 初始化为当前时间
+
+            lastShopTime = Date.now();
+            lastCatTime = Date.now();
             
             // 更新显示
             player.style.left = '47.5%';
-            distanceDisplay.textContent = '0 / 10000 距离目的地';
+            distanceDisplay.textContent = '0 / 15000 距离目的地';
             livesDisplay.textContent = '❤️❤️❤️';
             
             // 清除所有障碍物、店铺和猫
@@ -323,6 +415,7 @@
             startScreen.style.display = 'none';
             endScreen.style.display = 'none';
             gameScreen.style.display = 'block';
+            loveLetter.style.display = 'none';
             
             // 开始游戏循环
             if (animationFrameId) {
@@ -333,29 +426,28 @@
         
         function gameLoop() {
             if (!gameRunning) return;
-            
             // 更新距离
             distance += gameSpeed;
-            distanceDisplay.textContent = `${Math.min(distance, 10000)} / 10000 距离目的地`;
+            distanceDisplay.textContent = `${Math.min(distance, 15000)} / 15000 距离目的地`;
             
             // 检查是否到达终点
-            if (distance >= 10000) {
+            if (distance >= 15000) {
                 endGame(true);
                 return;
             }
             
             // 随着距离增加，游戏速度逐渐加快
-            if (distance < 2000) {
-                gameSpeed = baseSpeed + Math.floor(distance / 700);
-            } else if (distance < 5000) {
-                gameSpeed = baseSpeed + 2 + Math.floor((distance - 2000) / 1000);
+            if (distance < 5000) {
+                gameSpeed = baseSpeed + Math.floor(distance / 1500);
+            } else if (distance < 11000) {
+                gameSpeed = baseSpeed + 3 + Math.floor((distance - 5000) / 2000);
             } else {
-                gameSpeed = baseSpeed + 4 + Math.floor((distance - 5000) / 1500);
+                gameSpeed = baseSpeed + 6 + Math.floor((distance - 11000) / 2000);
             }
 
             // 生成障碍物
             const currentTime = Date.now();
-            if (currentTime - lastObstacleTime > 2000 - Math.min(distance / 20, 1500)) {
+            if (currentTime - lastObstacleTime > 1500 - Math.min(distance / 10, 1000)) {
                 createObstacle();
                 lastObstacleTime = currentTime;
             }
@@ -367,7 +459,7 @@
             }
             
             // 生成黑猫（彩蛋）
-            if (currentTime - lastCatTime > 10000 && Math.random() < 0.15) {
+            if (currentTime - lastCatTime > 15000 && Math.random() < 0.15) {
                 createCat();
                 lastCatTime = currentTime;
             }
@@ -575,23 +667,63 @@
             cancelAnimationFrame(animationFrameId);
             
             if (success) {
+                // 移除已有的按钮和角色
+
+                document.querySelectorAll('#end-screen button, #end-screen div').forEach(el => {
+
+                    if (el !== restartButton) el.remove();
+                });
+
                 // 到达终点，显示生日祝福
                 gameScreen.style.display = 'none';
                 endScreen.style.display = 'flex';
                 
-                // 终点显示女主角
-                const girlfriend = document.createElement('div');
-                girlfriend.style.position = 'absolute';
-                girlfriend.style.left = player.style.left;
-                girlfriend.style.bottom = '100px';
-                girlfriend.style.fontSize = '40px';
-                girlfriend.innerHTML = '👩';
-                endScreen.appendChild(girlfriend);
+                // 添加查看情书按钮
+                const showLetterBtn = document.createElement('button');
+                showLetterBtn.textContent = '查看情书';
+                showLetterBtn.style.marginTop = '20px';
+                showLetterBtn.style.padding = '10px 20px';
+                showLetterBtn.style.backgroundColor = '#FF4081';
+                showLetterBtn.style.color = 'white';
+                showLetterBtn.style.border = 'none';
+                showLetterBtn.style.borderRadius = '50px';
+                showLetterBtn.style.cursor = 'pointer';
+                showLetterBtn.onclick = showLoveLetter;
+                endScreen.appendChild(showLetterBtn);
+                
+
             } else {
                 // 游戏结束
                 alert('游戏结束！你跑了 ' + distance + ' ');
                 startScreen.style.display = 'flex';
             }
+        }
+        
+        function showLoveLetter() {
+            const content = document.getElementById('love-letter-content');
+            content.innerHTML = '';
+            
+            // 添加爱心装饰
+            for (let i = 0; i < 15; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart-decoration';
+                heart.innerHTML = '❤️';
+                heart.style.left = `${Math.random() * 100}%`;
+                heart.style.top = `${Math.random() * 100}%`;
+                heart.style.animationDelay = `${Math.random() * 2}s`;
+                content.appendChild(heart);
+            }
+            
+            // 逐行显示情书内容
+            loveLetterLines.forEach((line, index) => {
+                const p = document.createElement('p');
+                p.className = 'love-letter-line';
+                p.textContent = line;
+                p.style.animationDelay = `${index * 0.3}s`;
+                content.appendChild(p);
+            });
+            
+            loveLetter.style.display = 'flex';
         }
     </script>
 </body>
