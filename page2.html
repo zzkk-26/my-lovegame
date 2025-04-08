@@ -1,0 +1,730 @@
+﻿<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奔向你的爱 - 祝你有个快乐的一天</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #FFF8E1; /* 米黄色背景 */
+            overflow: hidden;
+        }
+        
+        #start-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #FFD700;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #start-screen h1 {
+            font-size: 2.5rem;
+            color: #FF4081;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        #start-button {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            background-color: #FF4081;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        #game-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        
+        .lane {
+            position: absolute;
+            height: 100%;
+            border-right: 2px dashed #795548;
+        }
+        
+        #shop-lane {
+            width: 30%;
+            left: 0;
+            background-color: #FFF8E1;
+            overflow: hidden;
+        }
+        
+        #lane1 {
+            width: 35%;
+            left: 30%;
+        }
+        
+        #lane2 {
+            width: 35%;
+            left: 65%;
+        }
+        
+        #player {
+            position: absolute;
+            width: 50px;
+            height: 80px;
+            bottom: 100px;
+            left: 47.5%;
+            font-size: 40px;
+            text-align: center;
+            transition: left 0.3s ease;
+            z-index: 10;
+        }
+        
+        .obstacle {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            font-size: 30px;
+            text-align: center;
+            z-index: 5;
+        }
+        
+        .shop {
+            position: absolute;
+            width: 90%;
+            height: 80px;
+            background-color: white;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            padding: 10px 0;
+        }
+        
+        #distance {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+            z-index: 20;
+        }
+        
+        #lives {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: #FF4081;
+            z-index: 20;
+        }
+        
+        #end-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 216, 225, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        
+        #end-screen h1 {
+            font-size: 3rem;
+            color: #FF4081;
+            margin-bottom: 1rem;
+            text-align: center;
+            animation: rainbow 2s infinite;
+        }
+        
+        #end-screen p {
+            font-size: 1.5rem;
+            color: #795548;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        #restart-button {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            background-color: #FF4081;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .cat {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            font-size: 30px;
+            text-align: center;
+            z-index: 5;
+            animation: float 2s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes rainbow {
+            0% { color: #FF4081; }
+            20% { color: #FF5722; }
+            40% { color: #FFC107; }
+            60% { color: #4CAF50; }
+            80% { color: #2196F3; }
+            100% { color: #9C27B0; }
+        }
+        
+        .meow-effect {
+            position: absolute;
+            font-size: 2rem;
+            color: #FF4081;
+            animation: meow 1.5s forwards;
+            z-index: 30;
+            pointer-events: none;
+        }
+        
+        @keyframes meow {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(3); }
+        }
+        
+        /* 情书样式 */
+        #love-letter {
+            position: fixed; /* 改为fixed定位 */
+            top: 50%;        /* 新增 */
+            left: 50%;       /* 新增 */
+            transform: translate(-50%, -50%); /* 新增居中效果 */
+            width: 80%;
+            max-width: 600px;
+            background-color: rgba(255, 245, 245, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 210;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        #love-letter h2 {
+            color: #FF4081;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .love-letter-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .love-letter-line {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s forwards;
+            margin-bottom: 15px;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .heart-decoration {
+            position: absolute;
+            font-size: 20px;
+            color: #FF4081;
+            opacity: 0.6;
+            z-index: -1;
+            animation: float 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="start-screen">
+            <h1>奔向你的爱<br>游戏规则：点击屏幕躲避行人！</h1>
+            <button id="start-button">下地铁，去kkone</button>
+        </div>
+        
+        <div id="game-screen">
+            <div id="shop-lane" class="lane"></div>
+            <div id="lane1" class="lane"></div>
+            <div id="lane2" class="lane"></div>
+            
+            <div id="player">👩</div>
+            
+            <div id="distance">0 / 15000 距离目的地</div>
+            <div id="lives">❤️❤️❤️</div>
+        </div>
+        
+        <div id="end-screen">
+            <h1>老婆生日快乐！</h1>
+            <p>你成功找到了我，来到我身边啦！</p>
+            <h2>本次成绩：15000</h2>
+            <button id="restart-button">再玩一次</button>
+        </div>
+        
+        <div id="love-letter">
+            <h2>给最爱的你</h2>
+            <div class="love-letter-content" id="love-letter-content"></div>
+            <button id="close-letter" style="margin-top: 20px; padding: 10px 20px; background-color: #FF4081; color: white; border: none; border-radius: 50px; cursor: pointer;">关闭情书</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏变量
+        let gameRunning = false;
+        let playerLane = 1; // 1或2
+        let distance = 0;
+        let lives = 3;
+        let obstacles = [];
+        let shops = [];
+        let cats = [];
+        let baseSpeed = 2; // 基础速度降低
+        let gameSpeed = baseSpeed;
+        let lastObstacleTime = 0;
+        let lastShopTime = 0;
+        let lastCatTime = 0;
+        let animationFrameId;
+        
+        // DOM元素
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const player = document.getElementById('player');
+        const distanceDisplay = document.getElementById('distance');
+        const livesDisplay = document.getElementById('lives');
+        const shopLane = document.getElementById('shop-lane');
+        const lane1 = document.getElementById('lane1');
+        const lane2 = document.getElementById('lane2');
+        const loveLetter = document.getElementById('love-letter');
+        const closeLetterBtn = document.getElementById('close-letter');
+        
+        // 店铺名称列表
+        const shopNames = [
+            "瑞幸", "喜茶", "悠米彩蛋", "粤菜王府", 
+            "西西弗", "后街唐厨", "优衣库", 
+            "客语", "KKV主力店", "小米之家", "茶理宜世", 
+            "猫店", "国际影城", "太二酸菜鱼", "东方健身", "费大厨"
+        ];
+        
+        // 情书内容
+        const loveLetterLines = [
+            "亲爱的你：",
+            "还记得KKONE初遇那天吗？我在那等着你，你冒出来找到了我。这是一个男孩女孩相遇的故事，是的，我们从这里开启了爱情故事。",
+            "那是第一次和一个女孩去吃湘菜，从最初的拘谨到后来的谈笑，你特意为当时不吃辣的我点的排骨，现在想起还是暖暖的。谁能想到，后面我们就这样突然又自然地牵起了手。",
+            "我在地铁上第一次发表 总会有机会的 的名言，被你记忆至今。",
+            "第一次去吹海风，我们带着吃吃喝喝在红树林的草地上悠悠闲闲的度过一天，享受着温和的阳光。",
+            "第一次在梅花林里，那是我们去梅园不断拉扯不断探寻对方真心的过程。买上了酒，去而又返，你在那里试图用酒试出我的真心。",
+            "第一次玩海最是难忘——你在车里偷吃毛豆的可爱模样，我们在浪花里嬉闹，雨中哆嗦着捡贝壳却舍不得离开，放着我饥肠辘辘找吃得。这些第一次，我都好好收在记忆里了。",
+            "这些第一次，只是我们故事的开始。到现在又不单单是爱情故事了，我们又添加了一个人，我们的羁绊更加深。虽然我和你能创造的第一次越来越少，但是 一辈子 却是越来越深。",
+            "我们会有越来越多的第N次去吃湘菜，去吹海风，去树林里野餐，去玩海捡贝壳，可能是我们两个，也可能不止我们两个人。"
+        ];
+        
+        // 开始游戏
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        closeLetterBtn.addEventListener('click', function() {
+            loveLetter.style.display = 'none';
+        });
+        
+        // 点击切换跑道
+        gameScreen.addEventListener('click', function() {
+            if (!gameRunning) return;
+            
+            if (playerLane === 1) {
+                playerLane = 2;
+                player.style.left = '82.5%';
+            } else {
+                playerLane = 1;
+                player.style.left = '47.5%';
+            }
+        });
+        
+        function startGame() {
+            // 重置游戏状态
+            gameRunning = true;
+
+            playerLane = 1;
+
+            distance = 0;
+
+            lives = 3;
+        
+    obstacles = [];
+        
+    shops = [];
+
+            cats = [];
+
+            baseSpeed = 2;
+
+            gameSpeed = baseSpeed;
+
+            lastObstacleTime = Date.now(); // 初始化为当前时间
+
+            lastShopTime = Date.now();
+            lastCatTime = Date.now();
+            
+            // 更新显示
+            player.style.left = '47.5%';
+            distanceDisplay.textContent = '0 / 15000 距离目的地';
+            livesDisplay.textContent = '❤️❤️❤️';
+            
+            // 清除所有障碍物、店铺和猫
+            document.querySelectorAll('.obstacle, .shop, .cat, .meow-effect').forEach(el => el.remove());
+            
+            // 显示游戏画面，隐藏其他
+            startScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            loveLetter.style.display = 'none';
+            
+            // 开始游戏循环
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            gameLoop();
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            // 更新距离
+            distance += gameSpeed;
+            distanceDisplay.textContent = `${Math.min(distance, 15000)} / 15000 距离目的地`;
+            
+            // 检查是否到达终点
+            if (distance >= 15000) {
+                endGame(true);
+                return;
+            }
+            
+            // 随着距离增加，游戏速度逐渐加快
+            if (distance < 5000) {
+                gameSpeed = baseSpeed + Math.floor(distance / 1500);
+            } else if (distance < 11000) {
+                gameSpeed = baseSpeed + 3 + Math.floor((distance - 5000) / 2000);
+            } else {
+                gameSpeed = baseSpeed + 6 + Math.floor((distance - 11000) / 2000);
+            }
+
+            // 生成障碍物
+            const currentTime = Date.now();
+            if (currentTime - lastObstacleTime > 1500 - Math.min(distance / 10, 1000)) {
+                createObstacle();
+                lastObstacleTime = currentTime;
+            }
+            
+            // 生成店铺
+            if (currentTime - lastShopTime > 2000) {
+                createShop();
+                lastShopTime = currentTime;
+            }
+            
+            // 生成黑猫（彩蛋）
+            if (currentTime - lastCatTime > 15000 && Math.random() < 0.15) {
+                createCat();
+                lastCatTime = currentTime;
+            }
+            
+            // 移动障碍物
+            moveObstacles();
+            
+            // 移动店铺
+            moveShops();
+            
+            // 移动猫
+            moveCats();
+            
+            // 检测碰撞
+            checkCollisions();
+            
+            // 继续游戏循环
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+        
+        function createObstacle() {
+            const lane = Math.random() < 0.5 ? 1 : 2;
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            obstacle.innerHTML = '🚶';
+            
+            const left = lane === 1 ? '47.5%' : '82.5%';
+            obstacle.style.left = left;
+            obstacle.style.top = '-50px';
+            
+            gameScreen.appendChild(obstacle);
+            
+            obstacles.push({
+                element: obstacle,
+                lane: lane,
+                top: -50,
+                width: 50,
+                height: 50
+            });
+        }
+        
+        function createShop() {
+            const shop = document.createElement('div');
+            shop.className = 'shop';
+            
+            // 随机选择店铺名称
+            const shopName = shopNames[Math.floor(Math.random() * shopNames.length)];
+            shop.textContent = shopName;
+            
+            shop.style.left = '5%';
+            shop.style.top = '-80px';
+            
+            shopLane.appendChild(shop);
+            
+            shops.push({
+                element: shop,
+                top: -80,
+                width: 90,
+                height: 80
+            });
+        }
+        
+        function createCat() {
+            const lane = Math.random() < 0.5 ? 1 : 2;
+            const cat = document.createElement('div');
+            cat.className = 'cat';
+            cat.innerHTML = '🐈‍';
+            
+            const left = lane === 1 ? '47.5%' : '82.5%';
+            cat.style.left = left;
+            cat.style.top = '-40px';
+            
+            gameScreen.appendChild(cat);
+            
+            cats.push({
+                element: cat,
+                lane: lane,
+                top: -40,
+                width: 40,
+                height: 40
+            });
+        }
+        
+        function moveObstacles() {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                obstacle.top += gameSpeed;
+                obstacle.element.style.top = `${obstacle.top}px`;
+                
+                // 移除超出屏幕的障碍物
+                if (obstacle.top > window.innerHeight) {
+                    obstacle.element.remove();
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+        
+        function moveShops() {
+            for (let i = shops.length - 1; i >= 0; i--) {
+                const shop = shops[i];
+                shop.top += gameSpeed * 0.8; // 店铺移动速度较慢
+                shop.element.style.top = `${shop.top}px`;
+                
+                // 移除超出屏幕的店铺
+                if (shop.top > window.innerHeight) {
+                    shop.element.remove();
+                    shops.splice(i, 1);
+                }
+            }
+        }
+        
+        function moveCats() {
+            for (let i = cats.length - 1; i >= 0; i--) {
+                const cat = cats[i];
+                cat.top += gameSpeed;
+                cat.element.style.top = `${cat.top}px`;
+                
+                // 移除超出屏幕的猫
+                if (cat.top > window.innerHeight) {
+                    cat.element.remove();
+                    cats.splice(i, 1);
+                }
+            }
+        }
+        
+        function checkCollisions() {
+            // 玩家位置和尺寸
+            const playerRect = {
+                left: playerLane === 1 ? window.innerWidth * 0.475 : window.innerWidth * 0.825,
+                top: window.innerHeight - 180,
+                width: 50,
+                height: 80
+            };
+            
+            // 检查与障碍物的碰撞
+            for (let i = 0; i < obstacles.length; i++) {
+                const obstacle = obstacles[i];
+                
+                if (
+                    obstacle.lane === playerLane &&
+                    obstacle.top + obstacle.height > playerRect.top &&
+                    obstacle.top < playerRect.top + playerRect.height
+                ) {
+                    // 碰撞发生
+                    handleCollision();
+                    obstacle.element.remove();
+                    obstacles.splice(i, 1);
+                    break;
+                }
+            }
+            
+            // 检查与猫的碰撞（彩蛋）
+            for (let i = 0; i < cats.length; i++) {
+                const cat = cats[i];
+                
+                if (
+                    cat.lane === playerLane &&
+                    cat.top + cat.height > playerRect.top &&
+                    cat.top < playerRect.top + playerRect.height
+                ) {
+                    // 吃到猫，增加生命
+                   lives = Math.min(lives + 1, 3); // 保持最大4条命
+                   livesDisplay.textContent = '❤️'.repeat(Math.min(lives, 3)) + 
+                                            '♡'.repeat(3 - Math.min(lives, 3));
+
+                    // 显示"喵喵喵"特效
+                    const meow = document.createElement('div');
+                    meow.className = 'meow-effect';
+                    meow.textContent = '喵喵喵~';
+                    meow.style.left = `${playerRect.left}px`;
+                    meow.style.top = `${playerRect.top}px`;
+                    gameScreen.appendChild(meow);
+                    
+                    // 移除猫元素
+                    cat.element.remove();
+                    cats.splice(i, 1);
+                    
+                    // 特效自动移除
+                    setTimeout(() => {
+                        meow.remove();
+                    }, 1500);
+                    
+                    break;
+                }
+            }
+        }
+        
+        function handleCollision() {
+            lives--;
+            livesDisplay.textContent = '❤️'.repeat(lives) + '♡'.repeat(3 - lives);
+            
+            if (lives <= 0) {
+                endGame(false);
+            } else {
+                // 碰撞闪烁效果
+                player.style.opacity = '0.5';
+                setTimeout(() => {
+                    player.style.opacity = '1';
+                }, 200);
+            }
+        }
+        
+        function endGame(success) {
+            gameRunning = false;
+            cancelAnimationFrame(animationFrameId);
+            
+            if (success) {
+                // 移除已有的按钮和角色
+
+                document.querySelectorAll('#end-screen button, #end-screen div').forEach(el => {
+
+                    if (el !== restartButton) el.remove();
+                });
+
+                // 到达终点，显示生日祝福
+                gameScreen.style.display = 'none';
+                endScreen.style.display = 'flex';
+                
+                // 添加查看情书按钮
+                const showLetterBtn = document.createElement('button');
+                showLetterBtn.textContent = '查看情书';
+                showLetterBtn.style.marginTop = '20px';
+                showLetterBtn.style.padding = '10px 20px';
+                showLetterBtn.style.backgroundColor = '#FF4081';
+                showLetterBtn.style.color = 'white';
+                showLetterBtn.style.border = 'none';
+                showLetterBtn.style.borderRadius = '50px';
+                showLetterBtn.style.cursor = 'pointer';
+                showLetterBtn.onclick = showLoveLetter;
+                endScreen.appendChild(showLetterBtn);
+                
+
+            } else {
+                // 游戏结束
+                alert('游戏结束！你跑了 ' + distance + ' ');
+                startScreen.style.display = 'flex';
+            }
+        }
+        
+        function showLoveLetter() {
+            const content = document.getElementById('love-letter-content');
+            content.innerHTML = '';
+            
+            // 添加爱心装饰
+            for (let i = 0; i < 15; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart-decoration';
+                heart.innerHTML = '❤️';
+                heart.style.left = `${Math.random() * 100}%`;
+                heart.style.top = `${Math.random() * 100}%`;
+                heart.style.animationDelay = `${Math.random() * 2}s`;
+                content.appendChild(heart);
+            }
+            
+            // 逐行显示情书内容
+            loveLetterLines.forEach((line, index) => {
+                const p = document.createElement('p');
+                p.className = 'love-letter-line';
+                p.textContent = line;
+                p.style.animationDelay = `${index * 0.3}s`;
+                content.appendChild(p);
+            });
+            
+            loveLetter.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
